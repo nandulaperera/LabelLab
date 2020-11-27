@@ -4,11 +4,12 @@ import PropTypes from 'prop-types'
 import {
   Header,
   Icon,
-  TextArea,
-  Form,
+  Input,
   Button,
+  Card,
   Dimmer,
-  Loader
+  Loader,
+  Modal
 } from 'semantic-ui-react'
 import { updateProject, fetchProject } from '../../actions/index'
 import './css/projectDesc.css'
@@ -25,6 +26,7 @@ class ProjectDescriptionIndex extends Component {
     const { project } = this.props
     if (prevProps.project !== project) {
       this.setState({
+        name: project.projectName,
         desc: project.projectDescription
       })
     }
@@ -37,17 +39,21 @@ class ProjectDescriptionIndex extends Component {
   handleSubmit = () => {
     const { updateProject, project } = this.props
     let data = {
-      projectDescription: this.state.desc
+      project_description: this.state.desc,
+      project_name: project.projectName
     }
 
     updateProject(data, project.projectId, this.callback)
   }
   callback = () => {
     const { project, fetchProject } = this.props
+    this.close()
+    fetchProject(project.projectId)
+  }
+  close = () => {
     this.setState({
       edit: false
     })
-    fetchProject(project.projectId)
   }
   handleChange = e => {
     this.setState({
@@ -56,36 +62,50 @@ class ProjectDescriptionIndex extends Component {
   }
   render() {
     const { actions } = this.props
-    const { edit, desc } = this.state
+    const { edit, name, desc } = this.state
     return (
       <div className="projectDesc-parent">
         {actions.isfetching ? (
           <Dimmer active>
             <Loader indeterminate>Have some patience :)</Loader>
           </Dimmer>
-        ) : null}
-        <div className="projectDesc-header">
-          <Header content="Project Description" as="h4" />
-          <Icon name="pencil alternate" onClick={this.handleUpdate} />
-        </div>
-        {edit ? (
-          <Form>
-            <TextArea
-              placeholder="Write some project description"
-              value={desc}
-              onChange={this.handleChange}
-              name="desc"
-            />
-            <Button
-              className="projectDesc-submit"
-              floated="right"
-              onClick={this.handleSubmit}
-            >
-              Submit
-            </Button>
-          </Form>
-        ) : null}
-        {!edit && desc ? desc : null}
+        ) : (
+            <Card>
+              <Card.Header className="projectDesc-header">
+                <Header content={name} as="h4"></Header>
+                <Icon name="pencil alternate" onClick={this.handleUpdate} />
+              </Card.Header>
+              <Card.Content>
+                {edit ? (
+                  <Modal size="small" open={this.state.edit} onClose={this.close}>
+                    <Modal.Header>
+                      <p>Enter Project Description</p>
+                    </Modal.Header>
+                    <Modal.Actions>
+                      <div className="modal-actions">
+                        <Input
+                          name="desc"
+                          type="text"
+                          label="Description"
+                          placeholder="Description..."
+                          defaultValue={this.state.desc}
+                          onChange={this.handleChange}
+                        />
+                        <div>
+                          <Button
+                            positive
+                            onClick={this.handleSubmit}
+                            content="Submit"
+                          />
+                        </div>
+                      </div>
+                    </Modal.Actions>
+                  </Modal>
+                ) : null}
+                {!edit && desc ? desc : null}
+              </Card.Content>
+            </Card>
+          )}
       </div>
     )
   }
